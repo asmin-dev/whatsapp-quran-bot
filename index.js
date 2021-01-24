@@ -10,6 +10,7 @@
 const fs = require('fs');
 const qrcode = require('qrcode-terminal');
 const moment = require('moment');
+const difflib = require('difflib');
 const { WAConnection, MessageType, WA_MESSAGE_STUB_TYPE } = require('@adiwajshing/baileys');
 
 const express = require('express');
@@ -25,6 +26,7 @@ app.get('*', (req, res) => {
 app.listen(process.env.PORT || 8080);
 
 // initialized WAh
+const OWNER = '6281242873775@s.whatsapp.net';
 const con = new WAConnection();
 
 // Startwith scan qr code
@@ -57,9 +59,10 @@ async function handlerMessages(msg) {
     const pesan = msg.message.extendedTextMessage !== null && !msg.key.fromMe
       ? msg.message.extendedTextMessage.text
       : msg.message.conversation;
-    const nama = con.chats.get(msg.participant) === undefined
-      ? con.contacts[nomor].notify
-      : con.contacts[msg.participant].notify;
+    const rawName = con.chats.get(msg.participant) === undefined
+      ? con.contacts[nomor]
+      : con.contacts[msg.participant];
+    const nama = rawName !== undefined ? rawName.notify : undefined;
     if (nomor.endsWith('us')) {
       user = `${nama} di grub ${con.chats.get(nomor).name}`;
     } else if (nomor.endsWith('net')) {
@@ -163,21 +166,17 @@ async function handlerMessages(msg) {
       console.log(' ..done');
     } else if (command === '!broadcast') {
       let broadcast = '';
-      if (nomor === '6281242873775@s.whatsapp.net' || msg.participant === '6281242873775@s.whatsapp.net') {
+      if (nomor === OWNER || msg.participant === OWNER) {
         if (value === '') {
           con.sendMessage(nomor, 'Text nya bang jago', MessageType.text);
           con.chatRead(nomor);
         } else {
-          broadcast += `\n${value}`;
+          broadcast += `${value}`;
           const allUser = fs.readFileSync('./users.txt', 'utf-8').split('\n');
           allUser.pop();
           await allUser.forEach(async (pengguna) => {
-            for (let i = 0; i <= 100000; i++) {
-              if (i === 100000) {
-                con.sendMessage(pengguna, broadcast, MessageType.text);
+                await con.sendMessage(pengguna, broadcast, MessageType.text);
                 con.chatRead(nomor);
-              }
-            }
           });
         }
       } else {
@@ -187,6 +186,31 @@ async function handlerMessages(msg) {
           MessageType.text,
         );
         await con.chatRead(nomor);
+      }
+    } else if (command === '!filter') {
+      let textToSend = '';
+      if (nomor === OWNER || nomor === msg.participant) {
+        let resFilter = '';
+        const allUser = fs.readFileSync('users.txt', 'utf8').split('\n');
+        allUser.pop();
+        const userActive = await con.chats.toJSON();
+        allUser.forEach((userCheck) => {
+          const res = userActive.find((o) => o.jid === userCheck);
+          if (!res) {
+            const nameToDelete = con.contacts[userCheck];
+            textToSend += `Delete user: ${nameToDelete.jid.includes('.net') ? nameToDelete.notify : nameToDelete.jid}\n`;
+          } else {
+            resFilter += `${userCheck}\n`;
+          }
+        });
+        fs.writeFileSync('users.txt', resFilter, { flag: 'w' });
+        if (textToSend === '') {
+          con.sendMessage(OWNER, 'No users deleting', MessageType.text);
+        } else {
+          con.sendMessage(OWNER, textToSend, MessageType.text);
+        }
+      } else {
+        con.sendMessage(nomor, 'Kamu bukan bos saya', MessageType.text);
       }
     } else if (pesan !== '') {
       let textToSend = '';
@@ -199,8 +223,18 @@ async function handlerMessages(msg) {
           textToSend = 'Astagfirullah, jangan selalu ngebadword kawan. Itu sangat tidak baik';
           return;
         }
-        if (nomor.endsWith('net') && textToSend === '') {
-          textToSend = `Command *${pesan}* tidak terdaftar\nType *!command* untuk melihat daftar perintah`;
+        if (textToSend === '') {
+          const salam = ['assalamualaikum'];
+          if (pesan.length > 10) {
+            const reply = difflib.getCloseMatches(pesan.toLowerCase(), salam)[0];
+            if (reply !== undefined) {
+              textToSend = `Waalaikumsalam kak ${nama}`;
+            } else if (nomor.endsWith('.net')) {
+              textToSend = `Command *${pesan}* tidak terdaftar\nType *!command* untuk melihat daftar perintah`;
+            }
+          } else if (nomor.endsWith('.net')) {
+            textToSend = `Command *${pesan}* tidak terdaftar\nType *!command* untuk melihat daftar perintah`;
+          }
         }
       });
 
@@ -222,7 +256,7 @@ async function getMessagesUnread() {
           con.chatRead(m.key.remoteJid);
         }
       } catch (err) {
-        console.log(` [${moment().format('HH:mm:ss')}] ${err}`);
+        console.log(`[${moment().format('HH:mm:ss')}] ${err}`);
       }
     });
   }
@@ -230,7 +264,8 @@ async function getMessagesUnread() {
   await allChat.forEach((chat) => {
     const allready = fs.readFileSync('users.txt', 'utf-8');
     if (allready.includes(chat.jid) === false && chat.jid.includes('status') === false) {
-      console.log(` [${moment().format('HH:mm:ss')}] Added new user: ${con.contacts[chat.jid].notify}`);
+      const nama = con.contacts[chat.jid] !== undefined ? con.contacts[chat.jid].notify : undefined;
+      console.log(`[${moment().format('HH:mm:ss')}] Added new user: ${nama}`);
       fs.writeFileSync('users.txt', `${chat.jid}\n`, { flag: 'a+' });
     }
   });
