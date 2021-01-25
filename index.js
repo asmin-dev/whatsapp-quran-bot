@@ -11,7 +11,11 @@ const fs = require('fs');
 const qrcode = require('qrcode-terminal');
 const moment = require('moment');
 const difflib = require('difflib');
-const { WAConnection, MessageType, WA_MESSAGE_STUB_TYPE } = require('@adiwajshing/baileys');
+const {
+  WAConnection,
+  MessageType,
+  WA_MESSAGE_STUB_TYPE,
+} = require('@adiwajshing/baileys');
 
 const express = require('express');
 const path = require('path');
@@ -37,7 +41,7 @@ con.on('qr', (qr) => {
 });
 con.on('credentials-updated', () => {
   // save credentials whenever updated
-  console.log(`[${moment().format(('HH:mm:ss'))}] Credentials update`);
+  console.log(`[${moment().format('HH:mm:ss')}] Credentials update`);
   // get all the auth info we need to restore this session
   const authInfo = con.base64EncodedAuthInfo();
   fs.writeFileSync('./session.json', JSON.stringify(authInfo, null, '\t')); // save this info to a file
@@ -97,7 +101,11 @@ async function handlerMessages(msg) {
 
     // Handler if received new message
     const type = Object.keys(msg.message)[0];
-    if (type === 'stickerMessage' && !msg.key.fromMe && nomor.endsWith('.net')) {
+    if (
+      type === 'stickerMessage'
+      && !msg.key.fromMe
+      && nomor.endsWith('.net')
+    ) {
       const buffer = await con.downloadMediaMessage(msg);
       con.sendMessage(nomor, buffer, MessageType.sticker);
       con.chatRead(nomor);
@@ -175,8 +183,8 @@ async function handlerMessages(msg) {
           const allUser = fs.readFileSync('./users.txt', 'utf-8').split('\n');
           allUser.pop();
           await allUser.forEach(async (pengguna) => {
-                await con.sendMessage(pengguna, broadcast, MessageType.text);
-                con.chatRead(nomor);
+            await con.sendMessage(pengguna, broadcast, MessageType.text);
+            con.chatRead(nomor);
           });
         }
       } else {
@@ -195,12 +203,20 @@ async function handlerMessages(msg) {
         allUser.pop();
         const userActive = await con.chats.toJSON();
         allUser.forEach((userCheck) => {
-          const res = userActive.find((o) => o.jid === userCheck);
-          if (!res) {
-            const nameToDelete = con.contacts[userCheck];
-            textToSend += `Delete user: ${nameToDelete.jid.includes('.net') ? nameToDelete.notify : nameToDelete.jid}\n`;
-          } else {
-            resFilter += `${userCheck}\n`;
+          try {
+            const res = userActive.find((o) => o.jid === userCheck);
+            if (!res) {
+              const nameToDelete = con.contacts[userCheck];
+              textToSend += `Delete user: ${
+                nameToDelete.jid.includes('.net')
+                  ? nameToDelete.notify
+                  : nameToDelete.jid
+              }\n`;
+            } else {
+              resFilter += `${userCheck}\n`;
+            }
+          } catch (e) {
+            con.sendMessage(OWNER, `Skipped ${e} `, MessageType.text);
           }
         });
         fs.writeFileSync('users.txt', resFilter, { flag: 'w' });
@@ -226,7 +242,10 @@ async function handlerMessages(msg) {
         if (textToSend === '') {
           const salam = ['assalamualaikum'];
           if (pesan.length > 10) {
-            const reply = difflib.getCloseMatches(pesan.toLowerCase(), salam)[0];
+            const reply = difflib.getCloseMatches(
+              pesan.toLowerCase(),
+              salam,
+            )[0];
             if (reply !== undefined) {
               textToSend = `Waalaikumsalam kak ${nama}`;
             } else if (nomor.endsWith('.net')) {
@@ -263,8 +282,13 @@ async function getMessagesUnread() {
   const allChat = await con.chats.toJSON();
   await allChat.forEach((chat) => {
     const allready = fs.readFileSync('users.txt', 'utf-8');
-    if (allready.includes(chat.jid) === false && chat.jid.includes('status') === false) {
-      const nama = con.contacts[chat.jid] !== undefined ? con.contacts[chat.jid].notify : undefined;
+    if (
+      allready.includes(chat.jid) === false
+      && chat.jid.includes('status') === false
+    ) {
+      const nama = con.contacts[chat.jid] !== undefined
+        ? con.contacts[chat.jid].notify
+        : undefined;
       console.log(`[${moment().format('HH:mm:ss')}] Added new user: ${nama}`);
       fs.writeFileSync('users.txt', `${chat.jid}\n`, { flag: 'a+' });
     }
@@ -276,8 +300,15 @@ async function messagesHandler() {
   await con.on('message-new', async (msg) => {
     try {
       const content = fs.readFileSync('users.txt', 'utf-8');
-      if (content.includes(msg.key.remoteJid) === false && msg.key.remoteJid !== 'status@broadcast') {
-        console.log(`[${moment().format('HH:mm:ss')}] Added new user: ${con.contacts[msg.key.remoteJid].notify}`);
+      if (
+        content.includes(msg.key.remoteJid) === false
+        && msg.key.remoteJid !== 'status@broadcast'
+      ) {
+        console.log(
+          `[${moment().format('HH:mm:ss')}] Added new user: ${
+            con.contacts[msg.key.remoteJid].notify
+          }`,
+        );
         fs.writeFileSync('users.txt', `${msg.key.remoteJid}\n`, { flag: 'a+' });
       }
       if (msg.key.remoteJid !== 'status@broadcast') {
