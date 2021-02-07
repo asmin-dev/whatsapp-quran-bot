@@ -35,8 +35,8 @@ const con = new WAConnection();
 
 // Startwith scan qr code
 con.on('qr', (qr) => {
-  qrcode.generate(qr, { small: true });
   con.regenerateQRIntervalMs = null;
+  qrcode.generate(qr, { small: true });
   console.log(`[${moment().format('HH:mm:ss')}] Scan the Qr code with app!`);
 });
 con.on('credentials-updated', () => {
@@ -297,7 +297,7 @@ async function getMessagesUnread() {
 
 async function messagesHandler() {
   let done = false;
-  await con.on('message-new', async (msg) => {
+  con.on('message-new', async (msg) => {
     try {
       const content = fs.readFileSync('users.txt', 'utf-8');
       if (
