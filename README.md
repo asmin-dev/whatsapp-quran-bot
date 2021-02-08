@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to whatsapp-bot 👋</h1>
+<h1 align="center">Welcome to WhatsApp Qur'an Bot 👋</h1>
 <p align="center">
   <img alt="Version" src="https://img.shields.io/badge/version-1.0.0-blue.svg?cacheSeconds=2592000" />
   <img src="https://img.shields.io/badge/node-14.14.0-blue.svg" />
@@ -13,11 +13,9 @@
   </a>
 </p>
 
-> Simple whatsapp-bot quran
+> WhatsApp Qur'an Bot
 
 ### 🏠 [Homepage](https://github.com/asmin-dev/whatsbot#readme)
-
-### ✨ [Demo](https://video.xx.fbcdn.net/v/t42.9040-2/130030717_406054017183891_7857266030472196130_n.mp4?_nc_cat=108&ccb=2&_nc_sid=985c63&efg=eyJybHIiOjMwMCwicmxhIjo1MzUsInZlbmNvZGVfdGFnIjoibGVnYWN5X3NkIn0%3D&_nc_eui2=AeFFHyo7ot8-8kyC-jlIde_j_Vx8qKVxosr9XHyopXGiyt9uQ2LoWsSyRmEcbj9AkNFOpSQXPQ3s3NbZblFt6cXP&_nc_ohc=c1ZJQ8lr0gcAX8j6kJS&_nc_ht=video.fupg1-1.fna&oh=085df137af3eefb7ddb05dd7adb062ee&oe=5FCC9074)
 
 <br><a href="http://wa.me/6282290241942?text=!command">Please click me for connect to bot</a><br>
 
@@ -28,6 +26,10 @@
 ## Install
 
 ```sh
+apt-get update -y && apt-get upgrade -y
+apt-get install nodejs git
+git clone https://github.com/asmin-dev/whatsbot
+cd whatsbot
 npm install
 ```
 
