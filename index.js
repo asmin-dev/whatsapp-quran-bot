@@ -14,7 +14,7 @@ const difflib = require('difflib');
 const {
   WAConnection,
   MessageType,
-  WA_MESSAGE_STUB_TYPE,
+  ChatModification,
 } = require('@adiwajshing/baileys');
 
 const express = require('express');
@@ -228,6 +228,16 @@ async function handlerMessages(msg) {
       } else {
         con.sendMessage(nomor, 'Kamu bukan bos saya', MessageType.text);
       }
+    } else if (pesan === '!delete') {
+      if (nomor === OWNER) {
+        const allUser = fs.readFileSync('users.txt', 'utf-8').split('\n');
+        allUser.pop();
+        allUser.forEach(async (userDelete) => {
+          await con.modifyChat(userDelete, ChatModification.delete);
+        });
+      } else {
+        con.sendMessage(nomor, 'Maaf kamu bukan bos saya', MessageType.text);
+      }
     } else if (pesan !== '') {
       let textToSend = '';
       const pesanlist = pesan.toLowerCase().split(' ');
@@ -296,7 +306,6 @@ async function getMessagesUnread() {
 }
 
 async function messagesHandler() {
-  let done = false;
   con.on('message-new', async (msg) => {
     try {
       const content = fs.readFileSync('users.txt', 'utf-8');
@@ -326,6 +335,7 @@ async function messagesHandler() {
     }
   });
 }
+let done = false;
 try {
   messagesHandler();
 } catch (err) {
